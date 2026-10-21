@@ -1,0 +1,11 @@
+create_driver:
+  ros__parameters:
+    dev: /dev/roomba
+    robot_model: CREATE_2     # Roomba 600 series speaks the Create 2 OI
+    baud: 115200
+    base_frame: base_footprint
+    odom_frame: odom
+    latch_cmd_duration: 0.2   # stop if no cmd_vel for this many seconds
+    loop_hz: 10.0
+    publish_tf: true
+    gate_oc: true
