@@ -86,6 +86,34 @@ ros2 launch roomba_bringup roomba.launch.py
 
 パラメータは `roomba_bringup/config/roomba.yaml` にあります。
 
+### 5. Gazebo でシミュレーション
+
+Gazebo Fortress（`ign gazebo`）を使います。モデルの寸法とメッシュは `create_robot` の `create_description` を流用しています。
+トピック名（`/cmd_vel`・`/odom`・`/tf`）は実機の `create_driver` と同じです。
+
+```bash
+cd ~/ros2_ws/src
+ln -s ~/roomba-ros2/roomba_gazebo .
+# create_robot（humble ブランチ）を src に clone しておく
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select create_description roomba_gazebo
+source install/setup.bash
+ros2 launch roomba_gazebo sim.launch.py            # サーバーのみ（ヘッドレス）
+ros2 launch roomba_gazebo sim.launch.py gui:=true  # GUI も起動
+```
+
+別のターミナルで動かします。
+
+```bash
+ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}}"
+ros2 topic echo /odom
+```
+
+> [!NOTE]
+> Gazebo の DiffDrive は最後に受け取った `/cmd_vel` を保持し続けます。止めるときはゼロ速度を送ってください。
+> `gz sim` コマンドは Garden（gz-sim 7）が起動するため、ros_gz と通信できません。launch を使ってください。
+> Jetson Orin Nano では OGRE2 が GPU メモリ確保に失敗して落ちるため、描画エンジンはデフォルトで OGRE1（`render_engine:=ogre`）にしています。
+
 ## ディレクトリ
 
 ```
@@ -93,6 +121,7 @@ scripts/roomba_check.py      OI 接続確認スクリプト
 scripts/encoder_check.py     エンコーダ確認スクリプト
 udev/99-roomba.rules         /dev/roomba を作る udev ルール
 roomba_bringup/              ROS2 パッケージ（launch・設定）
+roomba_gazebo/               ROS2 パッケージ（Gazebo Fortress シミュレーション）
 ```
 
 ## ライセンス

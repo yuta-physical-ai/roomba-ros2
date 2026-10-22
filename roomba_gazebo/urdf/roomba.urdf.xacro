@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<!-- Roomba 600 series for Gazebo Fortress.
+     Link layout, dimensions and mesh follow create_description/urdf/create_base.urdf.xacro
+     (AutonomyLab/create_robot, BSD). Its Gazebo Classic plugins are replaced with
+     Fortress systems, a rear caster is added, and mass/inertia are recomputed.
+     Link names match create_driver so the same TF tree works on the real robot. -->
+<robot name="roomba" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="PI" value="3.1415926535897931"/>
+
+  <!-- Create 2 OI spec -->
+  <xacro:property name="wheel_separation" value="0.235"/>
+  <xacro:property name="wheel_radius" value="0.036"/>
+  <xacro:property name="wheel_width" value="0.024"/>
+  <xacro:property name="wheel_mass" value="0.1"/>
+
+  <xacro:property name="base_radius" value="0.16495"/>
+  <xacro:property name="base_height" value="0.0611632"/>
+  <xacro:property name="base_mass" value="3.3"/>
+  <!-- base_link sits this high above the floor (same as create_description) -->
+  <xacro:property name="base_z" value="0.017"/>
+
+  <xacro:property name="caster_radius" value="0.018"/>
+  <xacro:property name="caster_x" value="0.13"/>
+
+  <xacro:macro name="cylinder_inertia" params="m r h">
+    <inertia ixx="${m * (3 * r * r + h * h) / 12}" ixy="0" ixz="0"
+             iyy="${m * (3 * r * r + h * h) / 12}" iyz="0"
+             izz="${m * r * r / 2}"/>
+  </xacro:macro>
+
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 ${base_height / 2}"/>
+      <mass value="${base_mass}"/>
+      <xacro:cylinder_inertia m="${base_mass}" r="${base_radius}" h="${base_height}"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.0308"/>
+      <geometry>
+        <mesh filename="package://create_description/meshes/create_2.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0308"/>
+      <geometry>
+        <cylinder radius="${base_radius}" length="${base_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 ${base_z}"/>
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+  </joint>
+
+  <xacro:macro name="drive_wheel" params="prefix y">
+    <link name="${prefix}_wheel_link">
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <!-- cylinder axis is along y after the visual rotation -->
+        <inertia ixx="${wheel_mass * (3 * wheel_radius * wheel_radius + wheel_width * wheel_width) / 12}"
+                 ixy="0" ixz="0"
+                 iyy="${wheel_mass * wheel_radius * wheel_radius / 2}" iyz="0"
+                 izz="${wheel_mass * (3 * wheel_radius * wheel_radius + wheel_width * wheel_width) / 12}"/>
+      </inertial>
+      <visual>
+        <origin rpy="${PI / 2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </visual>
+      <!-- A sphere touches the floor at exactly y = ±wheel_separation/2. A cylinder's
+           contacts land on its rim edges, which narrows the effective track and
+           made the body over-rotate ~10% relative to wheel odometry. -->
+      <collision>
+        <geometry>
+          <sphere radius="${wheel_radius}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <origin xyz="0 ${y} ${wheel_radius - base_z}"/>
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <gazebo reference="${prefix}_wheel_link">
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:drive_wheel prefix="left" y="${wheel_separation / 2}"/>
+  <xacro:drive_wheel prefix="right" y="${-wheel_separation / 2}"/>
+
+  <!-- Frictionless spheres front and rear keep the body level -->
+  <xacro:macro name="caster" params="prefix x">
+    <link name="${prefix}_caster_link">
+      <inertial>
+        <mass value="0.01"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <sphere radius="${caster_radius}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <sphere radius="${caster_radius}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}_caster_joint" type="fixed">
+      <origin xyz="${x} 0 ${caster_radius - base_z}"/>
+      <parent link="base_link"/>
+      <child link="${prefix}_caster_link"/>
+    </joint>
+
+    <gazebo reference="${prefix}_caster_link">
+      <mu1>0.0</mu1>
+      <mu2>0.0</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:caster prefix="front" x="${caster_x}"/>
+  <xacro:caster prefix="rear" x="${-caster_x}"/>
+
+  <gazebo>
+    <plugin filename="ignition-gazebo-diff-drive-system"
+            name="ignition::gazebo::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+      <wheel_separation>${wheel_separation}</wheel_separation>
+      <wheel_radius>${wheel_radius}</wheel_radius>
+      <!-- Create 2 OI limit: 500 mm/s per wheel -->
+      <max_linear_velocity>0.5</max_linear_velocity>
+      <topic>/cmd_vel</topic>
+      <odom_topic>/odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+      <odom_publish_frequency>50</odom_publish_frequency>
+    </plugin>
+
+    <plugin filename="ignition-gazebo-joint-state-publisher-system"
+            name="ignition::gazebo::systems::JointStatePublisher">
+      <topic>/joint_states</topic>
+    </plugin>
+  </gazebo>
+
+</robot>
