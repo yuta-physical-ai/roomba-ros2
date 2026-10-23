@@ -1,0 +1,92 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 0.5
+      Plane Cell Count: 20
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: true
+      Marker Scale: 0.3
+    - Class: rviz_default_plugins/LaserScan
+      Name: Scan
+      Enabled: true
+      Topic:
+        Value: /scan
+        Reliability Policy: Best Effort
+      Size (m): 0.03
+      Style: Points
+      Size (Pixels): 3
+      Color Transformer: FlatColor
+      Color: 255; 50; 50
+    # Green: truth from the physics engine
+    - Class: rviz_default_plugins/Odometry
+      Name: Ground truth
+      Enabled: true
+      Topic:
+        Value: /ground_truth/odom
+      Keep: 200
+      Position Tolerance: 0.05
+      Angle Tolerance: 0.1
+      Shape:
+        Value: Arrow
+        Color: 50; 200; 50
+        Shaft Length: 0.15
+        Head Length: 0.05
+    # Orange: whatever publishes /odom (plugin, or your node with odom_source:=user)
+    - Class: rviz_default_plugins/Odometry
+      Name: /odom
+      Enabled: true
+      Topic:
+        Value: /odom
+      Keep: 200
+      Position Tolerance: 0.05
+      Angle Tolerance: 0.1
+      Shape:
+        Value: Arrow
+        Color: 255; 140; 0
+        Shaft Length: 0.15
+        Head Length: 0.05
+    # Blue: the plugin's estimate, only published with odom_source:=user
+    - Class: rviz_default_plugins/Odometry
+      Name: DiffDrive plugin
+      Enabled: true
+      Topic:
+        Value: /diff_drive/odom
+      Keep: 200
+      Position Tolerance: 0.05
+      Angle Tolerance: 0.1
+      Shape:
+        Value: Arrow
+        Color: 60; 120; 255
+        Shaft Length: 0.15
+        Head Length: 0.05
+  Global Options:
+    Fixed Frame: odom
+    Background Color: 48; 48; 48
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 120
+      X: 0
+      Y: 0
+Window Geometry:
+  Width: 1200
+  Height: 800

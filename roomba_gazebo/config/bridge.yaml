@@ -1,4 +1,5 @@
 # ros_gz_bridge topics. Fortress uses the ignition.msgs.* type names.
+# /odom and /tf are bridged separately (bridge_odom_*.yaml) depending on odom_source.
 - ros_topic_name: /clock
   gz_topic_name: /clock
   ros_type_name: rosgraph_msgs/msg/Clock
@@ -11,20 +12,21 @@
   gz_type_name: ignition.msgs.Twist
   direction: ROS_TO_GZ
 
-- ros_topic_name: /odom
-  gz_topic_name: /odom
-  ros_type_name: nav_msgs/msg/Odometry
-  gz_type_name: ignition.msgs.Odometry
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /tf
-  gz_topic_name: /tf
-  ros_type_name: tf2_msgs/msg/TFMessage
-  gz_type_name: ignition.msgs.Pose_V
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /joint_states
+# Raw per-physics-step joint states; joint_state_throttle republishes /joint_states
+- ros_topic_name: /gz/joint_states
   gz_topic_name: /joint_states
   ros_type_name: sensor_msgs/msg/JointState
   gz_type_name: ignition.msgs.Model
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /scan
+  gz_topic_name: /scan
+  ros_type_name: sensor_msgs/msg/LaserScan
+  gz_type_name: ignition.msgs.LaserScan
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /ground_truth/odom
+  gz_topic_name: /ground_truth/odom
+  ros_type_name: nav_msgs/msg/Odometry
+  gz_type_name: ignition.msgs.Odometry
   direction: GZ_TO_ROS

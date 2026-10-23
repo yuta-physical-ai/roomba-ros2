@@ -89,7 +89,7 @@ ros2 launch roomba_bringup roomba.launch.py
 ### 5. Gazebo でシミュレーション
 
 Gazebo Fortress（`ign gazebo`）を使います。モデルの寸法とメッシュは `create_robot` の `create_description` を流用しています。
-トピック名（`/cmd_vel`・`/odom`・`/tf`）は実機の `create_driver` と同じです。
+トピック名（`/cmd_vel`・`/odom`・`/tf`・`/joint_states`）は実機の `create_driver` と同じです。
 
 ```bash
 cd ~/ros2_ws/src
@@ -100,7 +100,43 @@ colcon build --symlink-install --packages-select create_description roomba_gazeb
 source install/setup.bash
 ros2 launch roomba_gazebo sim.launch.py            # サーバーのみ（ヘッドレス）
 ros2 launch roomba_gazebo sim.launch.py gui:=true  # GUI も起動
+ros2 launch roomba_gazebo sim.launch.py rviz:=true # RViz も起動
 ```
+
+| 引数 | デフォルト | 内容 |
+| --- | --- | --- |
+| `world` | `worlds/room.sdf` | 5×4 m の部屋（壁・ソファ・棚・脚付きローテーブル・ゴミ箱）。`worlds/empty.sdf` は床だけ |
+| `odom_source` | `gazebo` | `/odom` と TF `odom→base_footprint` を誰が出すか（下記） |
+| `joint_state_rate` | `50.0` | `/joint_states` の周期 [Hz]。実機の `create_driver` は `loop_hz`（10 Hz） |
+| `rviz` | `false` | RViz を起動（`/scan`・真値・`/odom` の軌跡を表示） |
+| `gui` / `render_engine` | `false` / `ogre` | Gazebo GUI と描画エンジン |
+
+主なトピック：
+
+| トピック | 型 | 内容 |
+| --- | --- | --- |
+| `/cmd_vel` | Twist | 速度指令（実機と同じ） |
+| `/joint_states` | JointState | 左右ホイール角 `left_wheel_joint`・`right_wheel_joint` [rad]（累積値） |
+| `/scan` | LaserScan | YDLIDAR X4 Pro 相当（360°、720点、7 Hz、0.12–10 m、フレーム `laser_link`） |
+| `/odom` | Odometry | オドメトリ（`odom_source` で切替） |
+| `/ground_truth/odom` | Odometry | 物理エンジンの真値。オドメトリ誤差の評価用（シミュレーションのみ） |
+| `/diff_drive/odom` | Odometry | DiffDrive プラグインの推定値（`odom_source:=user` のときだけ） |
+
+#### 自作オドメトリノードで動かす
+
+`odom_source:=user` にすると、Gazebo は `/odom` と TF `odom→base_footprint` を出さなくなります。
+自分のノードで `/joint_states` からこれらを出してください。プラグインの推定値は `/diff_drive/odom` に、真値は `/ground_truth/odom` に出るので、RViz（緑：真値、橙：`/odom`、青：プラグイン）で比べられます。
+
+```bash
+ros2 launch roomba_gazebo sim.launch.py odom_source:=user rviz:=true
+```
+
+計算に使う値は `urdf/roomba.urdf.xacro` にあります（実機 Create 2 OI の仕様値）。
+
+- ホイール半径 `wheel_radius` = 0.036 m
+- ホイール間距離 `wheel_separation` = 0.235 m
+
+LiDAR の取り付け位置（`laser_x`・`laser_z`）は仮の値です。マウントを作ったら実測して書き換えてください。
 
 別のターミナルで動かします。
 
@@ -113,6 +149,7 @@ ros2 topic echo /odom
 > Gazebo の DiffDrive は最後に受け取った `/cmd_vel` を保持し続けます。止めるときはゼロ速度を送ってください。
 > `gz sim` コマンドは Garden（gz-sim 7）が起動するため、ros_gz と通信できません。launch を使ってください。
 > Jetson Orin Nano では OGRE2 が GPU メモリ確保に失敗して落ちるため、描画エンジンはデフォルトで OGRE1（`render_engine:=ogre`）にしています。
+> LiDAR の描画には X ディスプレイが必要です。SSH から起動して `DISPLAY` が無いときは、launch が Jetson のデスクトップ（`:0`）を使います。
 
 ## ディレクトリ
 

@@ -1,0 +1,8 @@
+# odom_source:=user — your own node publishes /odom and odom->base_footprint from
+# /joint_states. The plugin's estimate stays visible under /diff_drive/odom for
+# comparison; its TF is not bridged so it cannot fight yours.
+- ros_topic_name: /diff_drive/odom
+  gz_topic_name: /diff_drive/odom
+  ros_type_name: nav_msgs/msg/Odometry
+  gz_type_name: ignition.msgs.Odometry
+  direction: GZ_TO_ROS
