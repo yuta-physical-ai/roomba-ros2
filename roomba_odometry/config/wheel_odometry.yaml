@@ -1,0 +1,10 @@
+wheel_odometry:
+  ros__parameters:
+    # Create 2 OI spec values (same as roomba_gazebo/urdf/roomba.urdf.xacro)
+    wheel_radius: 0.036      # [m]
+    wheel_separation: 0.235  # [m]
+    left_wheel_joint: left_wheel_joint
+    right_wheel_joint: right_wheel_joint
+    odom_frame: odom
+    base_frame: base_footprint
+    publish_tf: true

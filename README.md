@@ -127,8 +127,16 @@ ros2 launch roomba_gazebo sim.launch.py rviz:=true # RViz も起動
 `odom_source:=user` にすると、Gazebo は `/odom` と TF `odom→base_footprint` を出さなくなります。
 自分のノードで `/joint_states` からこれらを出してください。プラグインの推定値は `/diff_drive/odom` に、真値は `/ground_truth/odom` に出るので、RViz（緑：真値、橙：`/odom`、青：プラグイン）で比べられます。
 
+エンコーダオドメトリのノードは `roomba_odometry` パッケージにあります（`roomba_odometry/wheel_odometry.py`）。
+
 ```bash
+cd ~/ros2_ws/src
+ln -s ~/roomba-ros2/roomba_odometry .
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select roomba_odometry
+source install/setup.bash
 ros2 launch roomba_gazebo sim.launch.py odom_source:=user rviz:=true
+ros2 launch roomba_odometry wheel_odometry.launch.py   # 別ターミナル。実機では use_sim_time:=false
 ```
 
 計算に使う値は `urdf/roomba.urdf.xacro` にあります（実機 Create 2 OI の仕様値）。
@@ -159,6 +167,7 @@ scripts/encoder_check.py     エンコーダ確認スクリプト
 udev/99-roomba.rules         /dev/roomba を作る udev ルール
 roomba_bringup/              ROS2 パッケージ（launch・設定）
 roomba_gazebo/               ROS2 パッケージ（Gazebo Fortress シミュレーション）
+roomba_odometry/             ROS2 パッケージ（エンコーダオドメトリ）
 ```
 
 ## ライセンス
