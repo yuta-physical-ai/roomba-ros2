@@ -109,6 +109,7 @@ ros2 launch roomba_gazebo sim.launch.py rviz:=true # RViz も起動
 | `odom_source` | `gazebo` | `/odom` と TF `odom→base_footprint` を誰が出すか（下記） |
 | `joint_state_rate` | `50.0` | `/joint_states` の周期 [Hz]。実機の `create_driver` は `loop_hz`（10 Hz） |
 | `rviz` | `false` | RViz を起動（`/scan`・真値・`/odom` の軌跡を表示） |
+| `foxglove` | `true` | foxglove_bridge を起動（`ws://<Jetson>:8765`）。ブラウザの Foxglove で表示でき、描画はブラウザ側で行う |
 | `gui` / `render_engine` | `false` / `ogre` | Gazebo GUI と描画エンジン |
 
 主なトピック：

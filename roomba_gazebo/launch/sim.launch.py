@@ -40,6 +40,7 @@ def generate_launch_description():
     render_engine = LaunchConfiguration('render_engine')
     odom_source = LaunchConfiguration('odom_source')
     rviz = LaunchConfiguration('rviz')
+    foxglove = LaunchConfiguration('foxglove')
     joint_state_rate = LaunchConfiguration('joint_state_rate')
 
     robot_description = ParameterValue(Command(['xacro ', xacro_file]), value_type=str)
@@ -63,6 +64,9 @@ def generate_launch_description():
                                           'the DiffDrive plugin, or your own node'),
         DeclareLaunchArgument('rviz', default_value='false',
                               description='Start RViz'),
+        DeclareLaunchArgument('foxglove', default_value='true',
+                              description='Start foxglove_bridge (ws://<host>:8765) for '
+                                          'viewing in Foxglove from a browser'),
         DeclareLaunchArgument('joint_state_rate', default_value='50.0',
                               description='/joint_states rate in Hz (the real create_driver '
                                           'publishes at its loop_hz)'),
@@ -122,5 +126,15 @@ def generate_launch_description():
             arguments=['-d', rviz_config],
             parameters=[{'use_sim_time': True}],
             condition=IfCondition(rviz),
+        ),
+
+        # Rendering happens in the browser, so this is much lighter on the Jetson than
+        # RViz over VNC. Meshes (package://...dae) are served through its asset capability.
+        Node(
+            package='foxglove_bridge',
+            executable='foxglove_bridge',
+            output='screen',
+            parameters=[{'port': 8765, 'use_sim_time': True}],
+            condition=IfCondition(foxglove),
         ),
     ])
