@@ -160,6 +160,21 @@ ros2 topic echo /odom
 > Jetson Orin Nano では OGRE2 が GPU メモリ確保に失敗して落ちるため、描画エンジンはデフォルトで OGRE1（`render_engine:=ogre`）にしています。
 > LiDAR の描画には X ディスプレイが必要です。SSH から起動して `DISPLAY` が無いときは、launch が Jetson のデスクトップ（`:0`）を使います。
 
+## キーボード操作（roomba_teleop）
+
+`teleop_twist_keyboard` はキーを押したときにしか指令を出しません。一方で実機のドライバは、`/cmd_vel` が 0.2 秒届かないと止まります。
+そこで、中継ノード `cmd_vel_relay` が最後のキー入力を 20 Hz で送り続けます。キー入力が 0.6 秒途切れたら止めます。
+
+```bash
+cd ~/ros2_ws/src
+ln -s ~/roomba-ros2/roomba_teleop .
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select roomba_teleop
+source install/setup.bash
+ros2 launch roomba_teleop teleop.launch.py   # シミュレーションでは use_sim_time:=true
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=cmd_vel_key   # 別ターミナル
+```
+
 ## ディレクトリ
 
 ```
@@ -169,6 +184,7 @@ udev/99-roomba.rules         /dev/roomba を作る udev ルール
 roomba_bringup/              ROS2 パッケージ（launch・設定）
 roomba_gazebo/               ROS2 パッケージ（Gazebo Fortress シミュレーション）
 roomba_odometry/             ROS2 パッケージ（エンコーダオドメトリ）
+roomba_teleop/               ROS2 パッケージ（キーボード操作の中継ノード）
 ```
 
 ## ライセンス

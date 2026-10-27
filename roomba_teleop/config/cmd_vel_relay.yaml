@@ -1,0 +1,6 @@
+cmd_vel_relay:
+  ros__parameters:
+    # Faster than create_driver's latch_cmd_duration (0.2 s) so the wheels never stop between ticks
+    rate: 20.0      # [Hz]
+    # Longer than the terminal's key-repeat delay (~0.5 s) so holding a key does not stutter
+    timeout: 0.6    # [s]
